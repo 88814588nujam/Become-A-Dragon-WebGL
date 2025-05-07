@@ -1,0 +1,17 @@
+name: Build and Deploy Unity Game
+ 
+on: [push]
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build Unity Project
+      uses: game-ci/unity-builder@v2
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      with:
+        targetPlatform: StandaloneWindows64 # 或其他目标平台，如WebGL, iOS等
+    - name: Deploy to Itch.io # 如果你打算部署到Itch.io或其他平台，可以添加部署步骤
+      # 这里添加部署的具体步骤和配置，例如使用itch-deploy工具等。
