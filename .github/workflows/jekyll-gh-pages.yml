@@ -1,17 +1,57 @@
-name: Build and Deploy Unity Game
- 
-on: [push]
- 
+name: Unity 6 WebGL Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   build:
+    name: Build WebGL
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Build Unity Project
-      uses: game-ci/unity-builder@v2
-      env:
-        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-      with:
-        targetPlatform: StandaloneWindows64 # 或其他目标平台，如WebGL, iOS等
-    - name: Deploy to Itch.io # 如果你打算部署到Itch.io或其他平台，可以添加部署步骤
-      # 这里添加部署的具体步骤和配置，例如使用itch-deploy工具等。
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Cache Library
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-${{ runner.os }}-${{ hashFiles('**/*.cs') }}
+          restore-keys: |
+            Library-${{ runner.os }}-
+
+      - name: Set up Unity 6
+        uses: game-ci/unity-actions/setup@v2
+        with:
+          unityVersion: 6000.0.23f1  # 注意这是 Unity 6 的格式
+
+      - name: Build WebGL
+        uses: game-ci/unity-actions/build@v2
+        with:
+          targetPlatform: WebGL
+
+      - name: Upload WebGL Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: WebGL-Build
+          path: build/WebGL
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download WebGL Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: WebGL-Build
+          path: build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
